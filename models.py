@@ -112,3 +112,18 @@ class GoogleNet(DL_model):
         return nn.Sequential(Inception(256, (160, 320), (32, 128), 128),
                          Inception(384, (192, 384), (48, 128), 128),
                          nn.AdaptiveAvgPool2d((1,1)), nn.Flatten())
+ 
+# LeNet + Batch normalization ------------------------------------------------------------
+
+class BNLeNet(DL_model):
+    def __init__(self, lr=0.1, num_classes=10, init_weights=init_weights):
+        super().__init__()
+        self.save_hyperparameters()
+        self.net = nn.Sequential(
+            nn.LazyConv2d(6, kernel_size=5), nn.LazyBatchNorm2d(),
+            nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
+            nn.LazyConv2d(16, kernel_size=5), nn.LazyBatchNorm2d(),
+            nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
+            nn.Flatten(), nn.LazyLinear(120), nn.LazyBatchNorm1d(),
+            nn.Sigmoid(), nn.LazyLinear(84), nn.LazyBatchNorm1d(),
+            nn.Sigmoid(), nn.LazyLinear(num_classes))
