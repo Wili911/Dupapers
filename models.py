@@ -57,6 +57,8 @@ class NiN(DL_model):
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten())
     
+# GoogleNet model architecture ------------------------------------------------------------
+
 class Inception(nn.Module):
     # c1--c4 are the number of output channels for each branch
     def __init__(self, c1, c2, c3, c4, **kwargs):

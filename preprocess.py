@@ -9,21 +9,13 @@ def global_contrast_normalization(X, s=1, lmda=10, epsilon=1e-8):
     return X
 
 def zca_whitening_matrix(X):
-    """
-    Function to compute ZCA whitening matrix (aka Mahalanobis whitening).
-    INPUT:  X: [M x N] matrix.
-        Rows: Variables
-        Columns: Observations
-    OUTPUT: ZCAMatrix: [M x M] matrix
-    """
-    sigma = np.cov(X) # [M x M]
+    sigma = np.cov(X)
     U,S,V = np.linalg.svd(sigma)
     epsilon = 0.1 
-    ZCAMatrix = np.dot(U, np.dot(np.diag(1.0/np.sqrt(S + epsilon)), U.T)) # [M x M]
+    ZCAMatrix = np.dot(U, np.dot(np.diag(1.0/np.sqrt(S + epsilon)), U.T))
     return ZCAMatrix
 
 def zca_whitening(x):
     for i in range(x.shape[2]):
-        # Before
         x[:,:,i] = np.dot(zca_whitening_matrix(x[:,:,i]), x[:,:,i])
     return x
