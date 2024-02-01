@@ -11,6 +11,7 @@ import os
 from models import VGG
 from models import NiN
 from models import BNLeNet
+from models import ResNet18
 from preprocess import global_contrast_normalization, zca_whitening
 from DL_framework import Trainer
 
@@ -69,7 +70,7 @@ print(train_data[0][0].shape)
 # Instantiate model
 #model = VGG(arch=((1, 16), (1, 32), (2, 64), (2, 128), (2, 128)), lr=0.01).to(device)
 
-model = BNLeNet(lr=0.1).to(device)
+model = ResNet18(lr=0.01).to(device)
 
 # Initialize model
 model.init(next(iter(train_dataloader))[0].to(device))
