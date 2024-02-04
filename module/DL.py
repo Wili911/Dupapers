@@ -41,7 +41,7 @@ class Trainer():
         self.device = device
         self.writer = None
         self.train_dataloader = train_dataloader
-        self.val_dataloader = None
+        self.val_dataloader = val_dataloader
         self.test_dataloader = test_dataloader
         self.epoch = 0
 
