@@ -34,13 +34,14 @@ class DL_model(nn.Module, HyperParameters):
             self.net.apply(self.init_weights)
 
 class Trainer():
-    def __init__(self, model, loss, optimizer, train_dataloader=None, test_dataloader=None, device='cpu'):
+    def __init__(self, model, loss, optimizer, train_dataloader=None, val_dataloader=None, test_dataloader=None, device='cpu'):
         self.model = model
         self.loss = loss
         self.optimizer = optimizer
         self.device = device
         self.writer = None
         self.train_dataloader = train_dataloader
+        self.val_dataloader = None
         self.test_dataloader = test_dataloader
         self.epoch = 0
 
@@ -74,9 +75,20 @@ class Trainer():
                             self.epoch*num_batches + batch)
                 running_loss = 0.0
 
-    def test_loop(self):
-        # Set the model to training mode - important for batch normalization and dropout layers
-        # Unnecessary in this situation but added for best practices
+    def val_loop(self):
+        loss, accuracy = self.test(self.val_dataloader)
+        self.writer.add_scalar('loss/test',
+                            loss,
+                            (self.epoch+1)*len(self.train_dataloader))
+        self.writer.add_scalar('accuracy/test',
+                            accuracy,
+                            (self.epoch+1)*len(self.train_dataloader))
+        print(f"Validation Error: \n Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {loss:>8f} \n")
+
+    def test(self, dataloader=None):
+        if dataloader is None:
+            dataloader = self.test_dataloader
+        # Set the model to evaluation mode - important for batch normalization and dropout layers
         self.model.eval()
         num_batches = len(self.test_dataloader)
         loss, accuracy = 0, 0
@@ -92,20 +104,9 @@ class Trainer():
                 
         loss /= num_batches
         accuracy /= num_batches
-        print(f"Test Error: \n Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {loss:>8f} \n")
-        self.writer.add_scalar('loss/test',
-                            loss,
-                            (self.epoch+1)*len(self.train_dataloader))
-        self.writer.add_scalar('accuracy/test',
-                            accuracy,
-                            (self.epoch+1)*len(self.train_dataloader))
-
-    def train(self, train_dataloader=None, test_dataloader=None, epochs=10, name=''):
-        if self.train_dataloader is None:
-            self.train_dataloader = train_dataloader
-        if self.test_dataloader is None:
-            self.test_dataloader = test_dataloader
-
+        return loss, accuracy
+        
+    def train(self, epochs=10, name=''):
         self.test_size = len(self.test_dataloader.dataset)
         self.train_size = len(self.train_dataloader.dataset)
 

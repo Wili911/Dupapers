@@ -1,4 +1,4 @@
-from DL_framework import DL_model
+from DL import DL_model
 import torch
 import torch.nn as nn
 
@@ -40,6 +40,7 @@ def nin_block(out_channels, kernel_size, strides, padding):
     return nn.Sequential(
         nn.LazyConv2d(out_channels, kernel_size, strides, padding), nn.ReLU(),
         nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU(),
+        nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU(),
         nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU())
 
 
@@ -48,12 +49,13 @@ class NiN(DL_model):
         super().__init__()
         self.save_hyperparameters()
         self.net = nn.Sequential(
-            nin_block(96, kernel_size=5, strides=2, padding=0),
-            nn.MaxPool2d(3, stride=2),
-            nin_block(256, kernel_size=3, strides=1, padding=2),
+            nin_block(96, kernel_size=7, strides=1, padding=2),
             nn.MaxPool2d(3, stride=2),
             nn.Dropout(0.5),
-            nin_block(num_classes, kernel_size=3, strides=1, padding=1),
+            nin_block(256, kernel_size=5, strides=1, padding=2),
+            nn.MaxPool2d(3, stride=2),
+            nn.Dropout(0.3),
+            nin_block(num_classes, kernel_size=3, strides=1, padding=2),
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten())
     
