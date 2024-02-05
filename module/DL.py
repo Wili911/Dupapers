@@ -131,7 +131,7 @@ class Trainer():
         for t in range(epochs):
             print(f"Epoch {t}\n-------------------------------")
             self.train_loop()
-            self.test_loop()
+            self.val_loop()
             self.epoch += 1
         print("Done!")
         self.writer.flush()
