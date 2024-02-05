@@ -2,6 +2,7 @@ import os
 import random
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
 
 def seed_everything(seed):
     random.seed(seed)
