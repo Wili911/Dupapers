@@ -71,9 +71,10 @@ model.init(next(iter(train_dataloader))[0].to(device))
 
 # Define loss and optimizer
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-6)
+optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-6, lr=0.1)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
-trainer = Trainer(model, loss_fn, optimizer, train_dataloader, val_dataloader, test_dataloader, device=device)
+trainer = Trainer(model, loss_fn, optimizer, scheduler, train_dataloader, val_dataloader, test_dataloader, device=device)
 
 # Train model
 trainer.train(epochs=50)

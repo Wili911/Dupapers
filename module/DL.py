@@ -33,16 +33,11 @@ class DL_model(nn.Module, HyperParameters):
         if self.init_weights is not None:
             self.net.apply(self.init_weights)
 
-class Trainer():
-    def __init__(self, model, loss, optimizer, train_dataloader=None, val_dataloader=None, test_dataloader=None, device='cpu'):
-        self.model = model
-        self.loss = loss
-        self.optimizer = optimizer
-        self.device = device
+class Trainer(HyperParameters):
+    def __init__(self, model, loss, optimizer, step_scheduler=None, train_dataloader=None, val_dataloader=None, test_dataloader=None, device='cpu'):
+        super().__init__()
+        self.save_hyperparameters()
         self.writer = None
-        self.train_dataloader = train_dataloader
-        self.val_dataloader = val_dataloader
-        self.test_dataloader = test_dataloader
         self.epoch = 0
 
     def train_loop(self):
@@ -62,7 +57,6 @@ class Trainer():
             # Backpropagation
             loss.backward()
             self.optimizer.step()
-            self.optimizer.zero_grad()
 
             running_loss += loss.item()
             N_log = 100
@@ -74,6 +68,15 @@ class Trainer():
                             running_loss,
                             self.epoch*num_batches + batch)
                 running_loss = 0.0
+            
+            val_loss = self.val_loop()
+
+            if self.step_scheduler is not None:
+                if self.step_scheduler.__class__.__name__ == 'ReduceLROnPlateau':
+                    self.step_scheduler.step(val_loss)
+                else:
+                    self.step_scheduler.step()
+            self.optimizer.zero_grad()
 
     def val_loop(self):
         loss, accuracy = self.test(self.val_dataloader)
@@ -84,6 +87,7 @@ class Trainer():
                             accuracy,
                             (self.epoch+1)*len(self.train_dataloader))
         print(f"Validation Error: \n Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {loss:>8f} \n")
+        return loss
 
     def test(self, dataloader=None):
         if dataloader is None:
@@ -131,7 +135,6 @@ class Trainer():
         for t in range(epochs):
             print(f"Epoch {t}\n-------------------------------")
             self.train_loop()
-            self.val_loop()
             self.epoch += 1
         print("Done!")
         self.writer.flush()
