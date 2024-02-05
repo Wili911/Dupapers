@@ -37,6 +37,7 @@ class Trainer(HyperParameters):
     def __init__(self, model, loss, optimizer, step_scheduler=None, train_dataloader=None, val_dataloader=None, test_dataloader=None, device='cpu'):
         super().__init__()
         self.save_hyperparameters()
+        self.logs = {'train_loss': [], 'val_loss': [], 'test_accuracy': [], 'val_accuracy': []}
         self.writer = None
         self.epoch = 0
 
@@ -46,7 +47,11 @@ class Trainer(HyperParameters):
         self.model.train()
         num_batches = len(self.train_dataloader)
         running_loss = 0.0
+
         for batch, (X, y) in enumerate(self.train_dataloader):
+            # Zero the parameter gradients
+            self.optimizer.zero_grad()
+
             X = X.to(self.device)
             y = y.to(self.device)
             # Compute prediction and loss
@@ -56,28 +61,20 @@ class Trainer(HyperParameters):
 
             # Backpropagation
             loss.backward()
-            self.optimizer.step()
-
+            self.optimizer.step()                            
+            
             running_loss += loss.item()
-            N_log = 100
-            if batch % N_log == (N_log - 1):
-                running_loss /= N_log 
+
+            batch_log = 100
+            if batch % batch_log == batch_log - 1:    # print every 100 mini-batches
+                running_loss /= batch_log
                 # Log the running loss averaged per batch
                 print(f"Epoch: {self.epoch}, Batch: {batch} / {num_batches}, Avg. Loss: {running_loss:.4f}")
                 self.writer.add_scalar('loss/train',
                             running_loss,
                             self.epoch*num_batches + batch)
                 running_loss = 0.0
-            
-            val_loss = self.val_loop()
-
-            if self.step_scheduler is not None:
-                if self.step_scheduler.__class__.__name__ == 'ReduceLROnPlateau':
-                    self.step_scheduler.step(val_loss)
-                else:
-                    self.step_scheduler.step()
-            self.optimizer.zero_grad()
-
+        
     def val_loop(self):
         loss, accuracy = self.test(self.val_dataloader)
         self.writer.add_scalar('loss/test',
@@ -87,7 +84,7 @@ class Trainer(HyperParameters):
                             accuracy,
                             (self.epoch+1)*len(self.train_dataloader))
         print(f"Validation Error: \n Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {loss:>8f} \n")
-        return loss
+        self.logs['val_loss'].append(loss)
 
     def test(self, dataloader=None):
         if dataloader is None:
@@ -135,6 +132,12 @@ class Trainer(HyperParameters):
         for t in range(epochs):
             print(f"Epoch {t}\n-------------------------------")
             self.train_loop()
+            self.val_loop()
+            if self.step_scheduler is not None:
+                if self.step_scheduler.__class__.__name__ == 'ReduceLROnPlateau':
+                    self.step_scheduler.step(self.logs['val_loss'][-1]) 
+                else:
+                    self.step_scheduler.step()
             self.epoch += 1
         print("Done!")
         self.writer.flush()

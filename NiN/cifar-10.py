@@ -35,16 +35,17 @@ try:
 except:
     print('Computing ZCA matrix')
     raw_train_data = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=None)
-    ZCA = compute_zca_matrix(raw_train_data.data[:,:,:,:])
+    ZCA = compute_zca_matrix(raw_train_data.data[:,:,:,:],0.1)
     np.save('cifar-10_zca.npy', ZCA)
 
 # Define the data transform
 def custom_transform(x):
     x = np.array(x)
     x1 = x.reshape(-1)
-    x2 = x1 - np.mean(x1)
-    x3 = np.dot(x2, ZCA)
-    x = np.reshape(x3, x.shape)
+    x1 = x1 - np.mean(x1)
+    x1 = x1 / np.sqrt((x1 ** 2).sum())
+    x1 = np.dot(x1, ZCA)
+    x = np.reshape(x1, x.shape)
     x = torch.from_numpy(x).float()
     x = x.permute(2, 0, 1)
     return x
