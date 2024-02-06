@@ -8,6 +8,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 import os
 
+import warnings
+warnings.filterwarnings("ignore")
+
+
 class HyperParameters:
     def save_hyperparameters(self, ignore=[]):
         """Save function arguments into class attributes.
@@ -49,17 +53,14 @@ class Trainer(HyperParameters):
         running_loss = 0.0
 
         for batch, (X, y) in enumerate(self.train_dataloader):
+            X = X.to(self.device)
+            y = y.to(self.device)
+            
             # Zero the parameter gradients
             self.optimizer.zero_grad()
 
-            X = X.to(self.device)
-            y = y.to(self.device)
-            # Compute prediction and loss
             pred = self.model(X)
-            # Apply softmax to the output of the model
             loss = self.loss(pred, y)
-
-            # Backpropagation
             loss.backward()
             self.optimizer.step()                            
             
@@ -67,7 +68,7 @@ class Trainer(HyperParameters):
 
             batch_log = 100
             if batch % batch_log == batch_log - 1:    # print every 100 mini-batches
-                running_loss /= batch_log
+                running_loss = running_loss / batch_log
                 # Log the running loss averaged per batch
                 print(f"Epoch: {self.epoch}, Batch: {batch} / {num_batches}, Avg. Loss: {running_loss:.4f}")
                 self.writer.add_scalar('loss/train',
@@ -110,6 +111,7 @@ class Trainer(HyperParameters):
     def train(self, epochs=10, name=''):
         self.test_size = len(self.test_dataloader.dataset)
         self.train_size = len(self.train_dataloader.dataset)
+        print(f"Training on {self.train_size} samples, validating on {self.test_size} samples")
 
         file_name = 'runs/'+name+'experiment_1'
         if os.path.exists(file_name):
@@ -135,7 +137,7 @@ class Trainer(HyperParameters):
             self.val_loop()
             if self.step_scheduler is not None:
                 if self.step_scheduler.__class__.__name__ == 'ReduceLROnPlateau':
-                    self.step_scheduler.step(self.logs['val_loss'][-1]) 
+                    self.step_scheduler.step(self.logs['val_loss'][-1])
                 else:
                     self.step_scheduler.step()
             self.epoch += 1

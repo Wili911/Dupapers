@@ -22,7 +22,7 @@ def vgg_block(num_convs, out_channels):
 
 # Create model structure
 class VGG(DL_model):
-    def __init__(self, arch, lr=0.1, num_classes=10, init_weights=init_weights):
+    def __init__(self, arch=(), lr=0.1, num_classes=10, init_weights=init_weights):
         super().__init__()
         self.save_hyperparameters()
         conv_blks = []
@@ -40,22 +40,26 @@ def nin_block(out_channels, kernel_size, strides, padding):
     return nn.Sequential(
         nn.LazyConv2d(out_channels, kernel_size, strides, padding), nn.ReLU(),
         nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU(),
-        nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU(),
-        nn.LazyConv2d(out_channels, kernel_size=1), nn.ReLU())
-
+    )
 
 class NiN(DL_model):
     def __init__(self, lr=0.1, num_classes=10, init_weights=init_weights):
         super().__init__()
         self.save_hyperparameters()
         self.net = nn.Sequential(
-            nin_block(96, kernel_size=7, strides=1, padding=2),
+            nn.LazyConv2d(192, kernel_size=5, stride=1, padding=2), nn.ReLU(),
+            nn.LazyConv2d(160, kernel_size=1), nn.ReLU(),
+            nn.LazyConv2d(96, kernel_size=1), nn.ReLU(),
             nn.MaxPool2d(3, stride=2),
             nn.Dropout(0.5),
-            nin_block(256, kernel_size=5, strides=1, padding=2),
+            nn.LazyConv2d(192, kernel_size=5, stride=1, padding=2), nn.ReLU(),
+            nn.LazyConv2d(192, kernel_size=1), nn.ReLU(),
+            nn.LazyConv2d(192, kernel_size=1), nn.ReLU(),
             nn.MaxPool2d(3, stride=2),
-            nn.Dropout(0.3),
-            nin_block(num_classes, kernel_size=3, strides=1, padding=2),
+            nn.Dropout(0.25),
+            nn.LazyConv2d(192, kernel_size=3, stride=1, padding=1), nn.ReLU(),
+            nn.LazyConv2d(192, kernel_size=1), nn.ReLU(),
+            nn.LazyConv2d(num_classes, kernel_size=1), nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten())
     
