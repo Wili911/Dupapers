@@ -30,7 +30,7 @@ try:
     ZCA_matrix = torch.tensor(np.load('cifar-10_zca.npy')).float()
     print('ZCA matrix loaded')
 except:
-    print('Computing ZCA matrix, mean vector and variance.')
+    print('Computing ZCA matrix.')
     raw_train_data = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=None)
     ZCA_matrix = compute_zca_transforms(raw_train_data.data[:,:,:,:], 0.1, save=True)
     
@@ -74,12 +74,10 @@ net.init(next(iter(train_loader))[0].to(device))
 
 # Define loss and optimizer
 loss_fn = nn.CrossEntropyLoss()
-# optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-6, lr=0.001)
 optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-3)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, verbose=True, patience=2, min_lr=1e-6)
 
-# scheduler = None
 trainer = Trainer(net, loss_fn, optimizer, scheduler, train_loader, val_loader, test_loader, device=device)
 
 # Train model
