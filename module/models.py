@@ -1,4 +1,4 @@
-from DL import DL_model
+from module.DL import DL_model
 import torch
 import torch.nn as nn
 

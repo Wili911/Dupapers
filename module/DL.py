@@ -7,6 +7,16 @@ import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 
 import os
+import sys
+from pathlib import Path
+
+
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[1] 
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))  # add ROOT to PATH
+ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+RUNS = ROOT / 'runs' 
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -38,9 +48,11 @@ class DL_model(nn.Module, HyperParameters):
             self.net.apply(self.init_weights)
 
 class Trainer(HyperParameters):
-    def __init__(self, model, loss, optimizer, step_scheduler=None, train_dataloader=None, val_dataloader=None, test_dataloader=None, device='cpu'):
+    def __init__(self, model, loss, optimizer, step_scheduler=None, train_dataloader=None, val_dataloader=None, test_dataloader=None, device='cpu', runs_dir='new_runs'):
         super().__init__()
         self.save_hyperparameters()
+        self.runs_dir = RUNS / runs_dir
+        print(f"Saving runs to {self.runs_dir}")
         self.logs = {'train_loss': [], 'val_loss': [], 'test_accuracy': [], 'val_accuracy': []}
         self.writer = None
         self.epoch = 0
@@ -108,18 +120,19 @@ class Trainer(HyperParameters):
         accuracy /= num_batches
         return loss, accuracy
         
-    def train(self, epochs=10, name=''):
+    def train(self, epochs=10):
         self.test_size = len(self.test_dataloader.dataset)
         self.train_size = len(self.train_dataloader.dataset)
         print(f"Training on {self.train_size} samples, validating on {self.test_size} samples")
 
-        file_name = 'runs/'+name+'experiment_1'
+
+        file_name = self.runs_dir / 'experiment_1'
         if os.path.exists(file_name):
             i = 2
-            new_name = 'runs/'+name+'experiment_'+str(i)
+            new_name = self.runs_dir /('experiment_'+str(i))
             while os.path.exists(new_name):
                 i += 1
-                new_name = 'runs/'+name+'experiment_'+str(i)
+                new_name = self.runs_dir /('experiment_'+str(i))
             file_name = new_name
         self.writer = SummaryWriter(file_name)
         layout = {

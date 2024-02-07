@@ -1,4 +1,5 @@
 runs/
 data/
 *.ipynb
-*.npy   
+*.npy
+*__pycache__/
