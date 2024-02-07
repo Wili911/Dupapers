@@ -14,8 +14,8 @@ from pathlib import Path
 
 sys.path.insert(1, os.path.join(Path(os.path.dirname( __file__ )).parent, 'module')) 
 
-from models import NiN, VGG
-from preprocess import global_contrast_normalization, flatten, compute_zca_matrix
+from models import NiN
+from preprocess import global_contrast_normalization, flatten, compute_zca_transforms, ZCA_whitening
 from DL import Trainer
 from utils import seed_everything
 from utils import set_device
@@ -25,31 +25,35 @@ seed_everything(0)
 device = set_device()
 
 # Load ZCA matrix
-# try:
-#     ZCA = np.load('cifar-10_zca.npy')
-#     print('ZCA matrix loaded')
-# except:
-#     print('Computing ZCA matrix')
-#     raw_train_data = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=None)
-#     ZCA = compute_zca_matrix(raw_train_data.data[:,:,:,:],0.1)
-#     np.save('cifar-10_zca.npy', ZCA)
+try:
+    ZCA_matrix = torch.tensor(np.load('cifar-10_zca.npy')).float()
+    print('ZCA matrix loaded')
+except:
+    print('Computing ZCA matrix, mean vector and variance.')
+    raw_train_data = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=None)
+    ZCA_matrix = compute_zca_transforms(raw_train_data.data[:,:,:,:], 0.1, save=True)
+    
 
 # Define the data transform
-# def custom_transform(x):
-#     x = np.array(x)
-#     x1 = x.reshape(-1)
-#     x1 = x1 - np.mean(x1)
-#     x1 = x1 / np.sqrt((x1 ** 2).sum())
-#     x1 = np.dot(x1, ZCA)
-#     x = np.reshape(x1, x.shape)
-#     x = torch.from_numpy(x).float()
-#     x = x.permute(2, 0, 1)
-#     return x
-
 transform = torchvision.transforms.Compose([
-    torchvision.transforms.ToTensor(),
-    torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ZCA_whitening(ZCA_matrix)
 ])
+
+def custom_transform(x):
+    x = np.array(x)
+    x1 = x.reshape(-1)
+    x1 = x1 - np.mean(x1)
+    x1 = x1 / np.sqrt((x1 ** 2).sum())
+    x1 = np.dot(x1, ZCA)
+    x = np.reshape(x1, x.shape)
+    x = torch.from_numpy(x).float()
+    x = x.permute(2, 0, 1)
+    return x
+
+# transform = torchvision.transforms.Compose([
+#     torchvision.transforms.ToTensor(),
+#     torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+# ])
 
 
 batch_size = 64
@@ -57,6 +61,21 @@ batch_size = 64
 # Load the data
 train_data = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform)
 test_data = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform)
+
+# Show a sample in the python script
+def show(X):
+    # Bring to [0, 1] range
+    X = X - X.min()
+    X = X / X.max()
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.imshow(X)
+    plt.show()
+    
+    
+# Show a sample
+show(train_data[1][0])
+
 
 # Split train/validation data
 train_size = int(0.8 * len(train_data))
