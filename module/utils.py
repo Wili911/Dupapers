@@ -19,3 +19,12 @@ def set_device():
         device = "cpu"
     print(f"Using {device} device")
     return device
+
+def show(X):
+    # Plot image by bringing the pixel values between 0 and 1
+    X = X - X.min()
+    X = X / X.max()
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.imshow(X)
+    plt.show()

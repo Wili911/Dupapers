@@ -2,6 +2,7 @@ import numpy as np
 
 import torch
 import torchvision
+from torchvision import transforms
 from torch import nn
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
@@ -34,27 +35,17 @@ except:
     ZCA_matrix = compute_zca_transforms(raw_train_data.data[:,:,:,:], 0.1, save=True)
     
 
-# Define the data transform
-transform = torchvision.transforms.Compose([
+transform = transforms.Compose([
     ZCA_whitening(ZCA_matrix)
 ])
 
-def custom_transform(x):
-    x = np.array(x)
-    x1 = x.reshape(-1)
-    x1 = x1 - np.mean(x1)
-    x1 = x1 / np.sqrt((x1 ** 2).sum())
-    x1 = np.dot(x1, ZCA)
-    x = np.reshape(x1, x.shape)
-    x = torch.from_numpy(x).float()
-    x = x.permute(2, 0, 1)
-    return x
-
-# transform = torchvision.transforms.Compose([
-#     torchvision.transforms.ToTensor(),
-#     torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-# ])
-
+aug_transform = transforms.Compose([
+                                      transforms.RandomHorizontalFlip(), # FLips the image w.r.t horizontal axis
+                                      transforms.RandomRotation(10),     #Rotates the image to a specified angel
+                                      transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)), #Performs actions like zooms, change shear angles.
+                                      transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2), # Set the color params
+                                      ZCA_whitening(ZCA_matrix)
+])
 
 batch_size = 64
 
@@ -62,20 +53,8 @@ batch_size = 64
 train_data = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform)
 test_data = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform)
 
-# Show a sample in the python script
-def show(X):
-    # Bring to [0, 1] range
-    X = X - X.min()
-    X = X / X.max()
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.imshow(X)
-    plt.show()
-    
-    
-# Show a sample
-show(train_data[1][0])
 
+    
 
 # Split train/validation data
 train_size = int(0.8 * len(train_data))
