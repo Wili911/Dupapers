@@ -23,7 +23,7 @@ def compute_zca_transforms(X, eps=1e-5, save=False):
     ZCA_matrix = (u * scale) @ u.T 
     if save:
         np.save('cifar-10_zca.npy', ZCA_matrix)
-    return torch.tensor(ZCA_matrix)
+    return torch.tensor(ZCA_matrix).float()
 
 class ZCA_whitening(object):
     """Apply GCA + ZCA whitening to the input data.
