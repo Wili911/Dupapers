@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from module.config import CIFAR10_DIR
 
 def global_contrast_normalization(X):  
     X = X - np.mean(X, axis=0)
@@ -22,7 +23,7 @@ def compute_zca_transforms(X, eps=1e-5, save=False):
     scale = np.sqrt(len(X) / (s+eps))
     ZCA_matrix = (u * scale) @ u.T 
     if save:
-        np.save('cifar-10_zca.npy', ZCA_matrix)
+        np.save(CIFAR10_DIR/'cifar-10_zca.npy', ZCA_matrix)
     return torch.tensor(ZCA_matrix).float()
 
 class ZCA_whitening(object):

@@ -9,24 +9,13 @@ from torch.utils.data import random_split
 
 import matplotlib.pyplot as plt
 
-import os
-import sys
-from pathlib import Path
-
-
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[1] 
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))  # add ROOT to PATH
-ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
-DATA_DIR = ROOT / 'data/cifar-10'  # data directory
-
 # Import custom modules
 from module.models import NiN
 from module.preprocess import global_contrast_normalization, flatten, compute_zca_transforms, ZCA_whitening
 from module.DL import Trainer
 from module.utils import seed_everything
 from module.utils import set_device
+from module.config import CIFAR10_DIR
 
 # Set seed and device
 seed_everything(0)
@@ -34,11 +23,11 @@ device = set_device()
 
 # Load ZCA matrix
 try:
-    ZCA_matrix = torch.tensor(np.load(DATA_DIR / 'cifar-10_zca.npy')).float()
+    ZCA_matrix = torch.tensor(np.load(CIFAR10_DIR / 'cifar-10_zca.npy')).float()
     print('ZCA matrix loaded')
 except:
     print('Computing ZCA matrix.')
-    raw_train_data = torchvision.datasets.CIFAR10(root=DATA_DIR, train=True, download=True, transform=None)
+    raw_train_data = torchvision.datasets.CIFAR10(root=CIFAR10_DIR, train=True, download=True, transform=None)
     ZCA_matrix = compute_zca_transforms(raw_train_data.data[:,:,:,:], 0.1, save=True)
     
 
@@ -57,8 +46,8 @@ aug_transform = transforms.Compose([
 batch_size = 64
 
 # Load the data
-train_data = torchvision.datasets.CIFAR10(root=DATA_DIR, train=True, download=True, transform=transform)
-test_data = torchvision.datasets.CIFAR10(root=DATA_DIR, train=False, download=True, transform=transform)
+train_data = torchvision.datasets.CIFAR10(root=CIFAR10_DIR, train=True, download=True, transform=transform)
+test_data = torchvision.datasets.CIFAR10(root=CIFAR10_DIR, train=False, download=True, transform=transform)
 
 
     

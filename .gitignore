@@ -1,5 +1,20 @@
+## gitignore for Python
+## Source: https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore
+# Byte-compiled / optimized / DLL files
+*__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+*.egg-info/
+
+# Skip folders
 runs/
 data/
+
+# Jupiter Notebook
 *.ipynb
+
+# Numpy files
 *.npy
-*__pycache__/

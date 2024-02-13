@@ -8,17 +8,13 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 
-import sys
-from pathlib import Path
-
-sys.path.insert(1, os.path.join(Path(os.path.dirname( __file__ )).parent, 'module')) 
-
-from models import nin_block
-from models import init_weights
-from DL import Trainer
-from DL import DL_model
-from utils import seed_everything
-from utils import set_device
+from module.models import nin_block
+from module.models import init_weights
+from module.DL import Trainer
+from module.DL import DL_model
+from module.utils import seed_everything
+from module.utils import set_device
+from module.config import MNIST_DIR
 
 
 
@@ -28,7 +24,7 @@ device = set_device()
 
 
 # Load raw data
-raw_train_data = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=None)
+raw_train_data = torchvision.datasets.MNIST(root=MNIST_DIR, train=True, download=True, transform=None)
 
 # Define the data transform
 custom_transform = transforms.Compose(
@@ -36,8 +32,8 @@ custom_transform = transforms.Compose(
      transforms.Normalize((raw_train_data.data.float().mean() / 255,), (raw_train_data.data.float().std() / 255))])
 
 # Load the data with the custom transform
-train_data = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=custom_transform)
-test_data = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=custom_transform)
+train_data = torchvision.datasets.MNIST(root=MNIST_DIR, train=True, download=True, transform=custom_transform)
+test_data = torchvision.datasets.MNIST(root=MNIST_DIR, train=False, download=True, transform=custom_transform)
 
 
 # Split train/validation data
